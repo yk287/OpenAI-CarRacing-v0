@@ -18,10 +18,10 @@ VALUE0_LR = 1e-3
 VALUE1_LR = 1e-3
 
 class Agent():
-    def __init__(self, env, memory_size=1000000, batch=128, sigma=0.2, noise_clip=0.5, gamma = 0.99, update_frequency=2):
+    def __init__(self, env, image_size= 48, memory_size=1000000, batch=128, sigma=0.2, noise_clip=0.5, gamma = 0.99, update_frequency=2):
 
-        self.states = env.observation_space
-        self.state_size = env.observation_space.shape[0]
+        #self.states = env.observation_space
+        self.state_size = image_size
         self.actions = env.action_space
         self.action_size = env.action_space.shape[0]
         self.sigma = sigma
@@ -49,7 +49,6 @@ class Agent():
 
     def act(self, state, step, epsilon= True):
 
-        state = torch.from_numpy(np.asarray(state)).float().to(device)
         action = self.actor.forward(state)
         action = action.detach().cpu().numpy()
 
@@ -57,11 +56,14 @@ class Agent():
             noise = np.random.normal(0, 0.1, action.shape[0])
             action += noise
 
-        return action
+        return action.squeeze(0)
 
     def update(self, step):
 
         state, action, reward, next_state, done = self.memory.sample()
+
+        state = state.view(-1, 9, 48, 48)
+        next_state = next_state.view(-1, 9, 48, 48)
 
         next_state_action = self.target_actor(next_state)
 
